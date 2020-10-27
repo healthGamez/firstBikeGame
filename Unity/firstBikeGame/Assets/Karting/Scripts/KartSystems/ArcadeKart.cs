@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.IO.Ports; 
 
 namespace KartGame.KartSystems
 {
@@ -130,6 +131,7 @@ namespace KartGame.KartSystems
         List<StatPowerup> activePowerupList = new List<StatPowerup>();
         GameObject lastGroundCollided = null;
         ArcadeKart.Stats finalStats;
+        SerialPort sp = new SerialPort("COM4", 9600);
 
         void Awake()
         {
@@ -137,6 +139,8 @@ namespace KartGame.KartSystems
             m_Inputs = GetComponents<IInput>();
             suspensionNeutralPos = SuspensionBody.transform.localPosition;
             suspensionNeutralRot = SuspensionBody.transform.localRotation;
+            sp.Open();
+            sp.ReadTimeout = 1;
         }
 
         void FixedUpdate()
@@ -160,6 +164,18 @@ namespace KartGame.KartSystems
             float accel = Input.y;
             float turn = Input.x;
 
+            accel = 0; //Disable keyboard acceleration by setting accelaration to 0
+            if (sp.IsOpen)
+            {
+                try
+                {
+                    accel = sp.ReadByte() * 20;
+                    Debug.Log("Acceleration:" + accel);
+                }
+                catch (System.Exception)
+                {
+                }
+            }
             // apply vehicle physics
             GroundVehicle(minHeight);
             if (canMove)
